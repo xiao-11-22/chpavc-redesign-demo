@@ -15,7 +15,10 @@
 import * as THREE from './vendor/three.module.js';
 import { feature } from './vendor/topojson/index.js';
 
-const LAND_DATA = '../data/land-110m.json';
+// 数据路径必须基于模块自身 URL 解析，
+// 否则 fetch('../data/...') 会以「文档 URL」为基准，
+// 部署到子目录（如 GitHub Pages 的 /repo/）时会解析到站点根目录而 404。
+const LAND_DATA = new URL('../data/land-110m.json', import.meta.url).href;
 
 /* ---------- 点位数据（经度, 纬度, 中文名, 类型） ---------- */
 const SITES = [
