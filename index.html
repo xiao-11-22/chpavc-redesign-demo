@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>中国华录·松下电子信息有限公司 — 改版动效 DEMO</title>
+<meta name="description" content="基于《公司网站改版设计DEMO V1.0》还原的首页动效技术验证原型">
+<link rel="canonical" href="https://chpavc.panasonic.cn/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="中国华录·松下电子信息有限公司">
+<meta property="og:title" content="日本品质 中国速度 — 中国华录·松下电子信息有限公司">
+<meta property="og:description" content="2+2 四大产业布局：视觉产业、光存储产业、核心关键件产业、康养产业。为全球客户提供从概念设计到规模化交付的一站式制造服务。">
+<meta property="og:image" content="assets/starfield.jpg">
+<meta property="og:url" content="https://chpavc.panasonic.cn/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<style>
+/* ============================================================
+   设计令牌
+   ---------------------------------------------------------
+   配色取自《公司网站改版设计DEMO V1.0》PDF 内容流提取的真实色值：
+     #00B0F0 (主色, 出现189次) / #0070C0 (164次) / #10203A (深底, 49次)
+   层级规范参考 corporate-blue + tech-minimal 两套企业设计系统：
+     表面用色阶递进而非描边，阴影仅留给真正浮起的元素，
+     字号收敛到 5 档，标题不超过两行。
+   ============================================================ */
+:root{
+  /* 品牌色 —— 严格取自设计稿 */
+  --c-primary:#00B0F0;
+  --c-primary-deep:#0070C0;
+  --c-navy:#10203A;
+  --c-navy-2:#0A1526;
+  --c-teal:#156082;
+  --c-teal-2:#157FBA;
+  --c-ink:#3F3B3A;
+
+  /* 表面：用色阶递进区分层级，不用描边 */
+  --s-page:#0A1526;        /* 页面底 */
+  --s-raised:#10203A;      /* 抬升一级 */
+  --s-card:#16273E;        /* 卡片面 */
+  --s-high:#1D3552;        /* 再抬升 */
+  --s-sunken:#070F1C;      /* 下沉（页脚/凹陷） */
+
+  /* 文字 */
+  --t-h1:#FFFFFF;
+  --t-ink:#C7D6E4;
+  --t-mute:#9FB3C7;
+  --t-faint:#7189A3;
+
+  /* 兼容别名 */
+  --c-mute:var(--t-mute);
+  --c-white:var(--t-h1);
+
+  /* 语义色 */
+  --c-hq:#00E5FF;
+  --c-ok:#22C55E;
+
+  /* 尺寸：5 档字号 */
+  --t-display:clamp(42px,7.4vw,92px);
+  --t-h2:clamp(26px,3.4vw,40px);
+  --t-h3:19px;
+  --t-body:16px;
+  --t-small:13px;
+
+  /* 间距：8px 基准 */
+  --sp-1:8px; --sp-2:16px; --sp-3:24px; --sp-4:32px;
+  --sp-5:48px; --sp-6:64px; --sp-7:96px; --sp-8:128px;
+
+  /* 圆角：克制，6~12px，不使用胶囊 */
+  --r-sm:6px; --r-md:10px; --r-lg:12px;
+
+  --w-max:1280px;
+  --ease:cubic-bezier(.22,.8,.28,1);
+  --ease-out:cubic-bezier(.16,1,.3,1);
+}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;font-family:"Microsoft YaHei","PingFang SC","Hiragino Sans GB",-apple-system,sans-serif;
+  background:var(--c-navy-2);color:var(--t-h1);
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;
+}
+img{max-width:100%;display:block}
+a{color:inherit;text-decoration:none}
+.wrap{width:min(var(--w-max),calc(100% - 48px));margin-inline:auto}
+@media(max-width:640px){.wrap{width:calc(100% - 32px)}}
+
+/* ---------- 动效基座：滚动揭示 ---------- */
+[data-reveal]{opacity:0;transform:translateY(34px);transition:opacity .9s var(--ease-out),transform .9s var(--ease-out)}
+[data-reveal].is-in{opacity:1;transform:none}
+[data-reveal="left"]{transform:translateX(-44px)}
+[data-reveal="right"]{transform:translateX(44px)}
+[data-reveal="scale"]{transform:scale(.92)}
+@media(prefers-reduced-motion:reduce){
+  *{animation-duration:.01ms!important;transition-duration:.01ms!important}
+  [data-reveal]{opacity:1!important;transform:none!important}
+}
+
+/* ================= 顶部导航 ================= */
+.nav{
+  position:fixed;inset:0 0 auto 0;z-index:100;height:76px;
+  display:flex;align-items:center;
+  transition:background .45s var(--ease),box-shadow .45s var(--ease),height .45s var(--ease);
+}
+.nav.scrolled{
+  height:64px;background:#0A1526;
+  backdrop-filter:blur(16px);
+  -webkit-backdrop-filter:blur(16px);
+}
+.nav-inner{display:flex;align-items:center;gap:40px;width:min(var(--w-max),calc(100% - 48px));margin-inline:auto}
+.brand{display:flex;align-items:center;gap:11px;flex-shrink:0}
+.brand-logo{
+  flex-shrink:0;width:152px;height:25px;object-fit:contain;
+  filter:brightness(0) invert(1);
+}
+
+.menu{display:flex;align-items:center;gap:4px;margin-left:auto}
+.menu a{
+  position:relative;padding:9px 15px;font-size:14.5px;color:rgba(255,255,255,.8);
+  border-radius:var(--r-sm);transition:color .3s,background .3s;white-space:nowrap;
+}
+.menu a::after{
+  content:"";position:absolute;left:15px;right:15px;bottom:2px;height:2px;border-radius:2px;
+  background:var(--c-primary);
+  transform:scaleX(0);transform-origin:left;transition:transform .4s var(--ease);
+}
+.menu a:hover{color:#fff}
+.menu a:hover::after,.menu a.active::after{transform:scaleX(1)}
+.menu a.active{color:var(--c-primary)}
+.nav-tools{display:flex;align-items:center;gap:14px;flex-shrink:0}
+.lang{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--t-mute)}
+.lang b{color:var(--c-primary);font-weight:600}
+.nav-search{
+  width:36px;height:36px;border-radius:50%;
+  background:rgba(255,255,255,.07);display:grid;place-items:center;cursor:pointer;
+  transition:background .3s,transform .3s;
+}
+.nav-search:hover{background:rgba(0,176,240,.22);transform:rotate(90deg)}
+.burger{display:none;width:34px;height:26px;position:relative;cursor:pointer}
+.burger i{position:absolute;left:0;right:0;height:2px;background:#fff;border-radius:2px;transition:.35s var(--ease)}
+.burger i:nth-child(1){top:0}.burger i:nth-child(2){top:12px}.burger i:nth-child(3){top:24px}
+.burger.on i:nth-child(1){transform:translateY(12px) rotate(45deg)}
+.burger.on i:nth-child(2){opacity:0}
+.burger.on i:nth-child(3){transform:translateY(-12px) rotate(-45deg)}
+@media(max-width:1080px){
+  .menu{position:fixed;inset:76px 0 auto 0;flex-direction:column;align-items:stretch;gap:0;
+    background:rgba(10,21,38,.97);backdrop-filter:blur(20px);padding:12px 24px 26px;
+    transform:translateY(-14px);opacity:0;pointer-events:none;transition:.4s var(--ease);
+    max-height:calc(100dvh - 76px);overflow:auto}
+  .menu.open{transform:none;opacity:1;pointer-events:auto}
+  .menu a{padding:13px 4px;font-size:15.5px}
+  .menu a::after{display:none}
+  .burger{display:block;order:3}
+  .lang{display:none}
+}
+
+/* ================= HERO ================= */
+.hero{
+  position:relative;min-height:100dvh;display:flex;align-items:center;
+  overflow:hidden;isolation:isolate;
+}
+.hero-bg{
+  position:absolute;inset:-8% -4%;z-index:-3;
+  background:url('assets/starfield.jpg') 68% center/cover no-repeat;
+  will-change:transform;
+}
+.hero-bg::after{
+  content:"";position:absolute;inset:0;
+  background:rgba(10,21,38,.46);
+}
+.hero-grid{
+  position:absolute;inset:0;z-index:-2;opacity:.2;width:100%;height:100%;
+  will-change:transform;
+}
+#stars{position:absolute;inset:0;z-index:-1;pointer-events:none}
+.hero-inner{position:relative;padding:104px 0 76px;max-width:880px}
+@keyframes heroIn{to{opacity:1;transform:none}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.28}}50%{opacity:.28}}
+
+.hero h1{
+  margin:0;font-size:var(--t-display);line-height:1.02;font-weight:800;
+  letter-spacing:-.045em;opacity:0;transform:translateY(30px);
+  animation:heroIn 1s var(--ease-out) .3s forwards;
+}
+.hero h1 .grad{color:var(--c-primary)}
+.hero h2{
+  margin:24px 0 0;font-size:clamp(16px,1.7vw,21px);font-weight:500;color:var(--t-ink);
+  letter-spacing:.14em;opacity:0;transform:translateY(26px);
+  animation:heroIn 1s var(--ease-out) .48s forwards;
+}
+.hero p{
+  margin:26px 0 0;max-width:34em;font-size:17px;line-height:1.85;color:var(--t-body);
+  text-wrap:pretty;
+  opacity:0;transform:translateY(26px);animation:heroIn 1s var(--ease-out) .62s forwards;
+}
+.hero-cta{display:flex;flex-wrap:wrap;gap:14px;margin-top:38px;opacity:0;transform:translateY(26px);animation:heroIn 1s var(--ease-out) .78s forwards}
+.btn{
+  position:relative;overflow:hidden;display:inline-flex;align-items:center;gap:9px;
+  padding:15px 32px;border-radius:var(--r-sm);font-size:15px;font-weight:600;
+  cursor:pointer;transition:transform .35s var(--ease),background .35s,color .35s;
+}
+.btn-primary{background:var(--c-primary);color:#04121F}
+.btn-primary:hover{transform:translateY(-3px);background:var(--c-primary-deep);color:#fff}
+.btn-ghost{color:#fff;background:rgba(255,255,255,.06)}
+.btn-ghost:hover{transform:translateY(-3px);background:rgba(255,255,255,.12)}
+.btn span{position:relative;z-index:1}
+.btn::before{
+  content:"";position:absolute;inset:0;z-index:0;
+  background:rgba(255,255,255,.18);
+  transform:scaleX(0);transform-origin:left;transition:transform .45s var(--ease);
+}
+.btn:hover::before{transform:scaleX(1)}
+
+.hero-scroll{
+  position:absolute;left:50%;bottom:30px;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:9px;
+  font-size:13px;letter-spacing:2.5px;color:var(--t-mute);
+  opacity:0;animation:heroIn 1s var(--ease-out) 1.1s forwards;
+}
+.hero-scroll .rail{width:1px;height:46px;background:rgba(0,176,240,.28);position:relative;overflow:hidden}
+.hero-scroll .rail::after{
+  content:"";position:absolute;inset:0;background:var(--c-primary);
+  animation:railRun 2.1s var(--ease) infinite;
+}
+@keyframes railRun{0%{transform:translateY(-100%)}60%,100%{transform:translateY(100%)}}
+
+/* ================= 通用 section ================= */
+section{position:relative}
+.sec{padding:clamp(72px,9vw,124px) 0}
+.sec-head{text-align:center;margin-bottom:clamp(40px,5vw,66px)}
+.sec-title{margin:0;font-size:clamp(27px,3.8vw,44px);font-weight:800;letter-spacing:-.6px;line-height:1.25}
+.sec-title em{font-style:normal;color:var(--c-primary)}
+.sec-desc{margin:18px auto 0;max-width:38em;font-size:16px;line-height:1.85;color:var(--t-mute);text-wrap:pretty}
+
+/* ================= 四大产业 ================= */
+.biz{background:var(--s-raised)}
+@media(max-width:1080px){
+      }
+.biz-card:hover::before{opacity:1}
+.biz-card:hover::after{transform:scaleX(1)}
+.biz-ico{
+  width:56px;height:56px;border-radius:var(--r-md);display:grid;place-items:center;margin-bottom:22px;
+  background:rgba(0,176,240,.14);position:relative;z-index:1;
+  transition:transform .55s var(--ease),background .45s;
+}
+.biz-card:hover .biz-ico{transform:rotate(-8deg) scale(1.1);background:rgba(0,176,240,.26)}
+.biz-ico svg{width:26px;height:26px;stroke:var(--c-primary);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.biz-stat{
+  margin:0;font-size:14px;color:var(--t-mute);
+  display:flex;align-items:baseline;gap:10px;
+}
+.biz-stat b{font-size:24px;font-weight:800;color:var(--c-primary);letter-spacing:-.02em}
+.biz-fig{
+  margin:0;position:relative;overflow:hidden;border-radius:var(--r-md);
+  height:132px;align-self:center;
+}
+.biz-fig img{width:100%;height:100%;object-fit:cover;opacity:.72;transition:opacity .5s,transform .9s var(--ease)}
+.biz-row:hover .biz-fig img{opacity:.95;transform:scale(1.05)}
+@media(max-width:1080px){.biz-lead{grid-column:span 1}}
+.biz-card:hover 
+/* 四大产业 —— 叙事式行布局（每产业一行：文字 | 数据 | 图） */
+.biz-list{display:grid;gap:0}
+.biz-row{
+  display:grid;
+  grid-template-columns:minmax(230px,1fr) minmax(240px,1.1fr) minmax(200px,.9fr) 300px;
+  gap:clamp(20px,3vw,44px);align-items:center;
+  padding:34px 0;
+  transition:background .45s;
+}
+.biz-row:nth-child(odd){background:rgba(255,255,255,.022)}
+.biz-row:nth-child(even){background:rgba(0,176,240,.035)}
+.biz-row:first-child{padding-top:0}
+.biz-row:last-child{padding-bottom:0}
+.biz-row:hover{background:rgba(0,176,240,.07)}
+.biz-row-head{display:flex;align-items:center;gap:16px}
+.biz-row-head h3{margin:0;font-size:23px;font-weight:800;letter-spacing:-.02em}
+.biz-ico{
+  width:52px;height:52px;border-radius:var(--r-md);display:grid;place-items:center;flex-shrink:0;
+  background:rgba(0,176,240,.14);transition:background .45s,transform .55s var(--ease);
+}
+.biz-row:hover .biz-ico{background:rgba(0,176,240,.26);transform:rotate(-8deg) scale(1.08)}
+.biz-ico svg{width:25px;height:25px;stroke:var(--c-primary);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.biz-row-desc{margin:0;font-size:15px;line-height:1.75;color:var(--t-mute);text-wrap:pretty}
+.biz-stat{align-self:center}
+@media(max-width:1080px){
+  .biz-row{grid-template-columns:1fr 1fr;gap:20px}
+  .biz-row-head{grid-column:span 2}
+  .biz-fig{grid-column:span 2;height:150px}
+}
+@media(max-width:620px){
+  .biz-row{grid-template-columns:1fr}
+  .biz-row-head{grid-column:span 1}
+  .biz-fig{grid-column:span 1;height:130px}
+}
+
+/* ================= 产品展示 ================= */
+.prod{background:var(--s-page)}
+.prod-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+@media(max-width:1080px){.prod-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:620px){.prod-grid{grid-template-columns:1fr}}
+.prod-card{
+  position:relative;border-radius:var(--r-lg);overflow:hidden;
+  background:var(--s-card);transition:transform .55s var(--ease),background .45s;
+}
+.prod-card:hover{transform:translateY(-10px);background:var(--s-high)}
+.prod-media{position:relative;aspect-ratio:4/3;overflow:hidden;background:var(--s-raised)}
+.prod-media img{width:100%;height:100%;object-fit:cover;transition:transform 1.1s var(--ease),filter .6s}
+.prod-card:hover .prod-media img{transform:scale(1.09)}
+.prod-media::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(10,21,38,0) 38%,rgba(10,21,38,.94) 100%); /* taste-skill-ignore: 照片上的中性遮罩，用于文字可读性 */
+}
+.prod-badge{
+  position:absolute;top:14px;left:14px;z-index:2;padding:5px 13px;border-radius:var(--r-sm);
+  background:rgba(10,21,38,.82);
+  font-size:13px;letter-spacing:1.2px;color:var(--c-primary);
+}
+.prod-play{
+  position:absolute;inset:0;z-index:2;display:grid;place-items:center;
+  opacity:0;transition:opacity .45s;
+}
+.prod-card:hover .prod-play{opacity:1}
+.prod-play span{
+  width:60px;height:60px;border-radius:50%;display:grid;place-items:center;
+  background:rgba(0,176,240,.92);
+  transition:transform .45s var(--ease);
+}
+.prod-card:hover .prod-play span{transform:scale(1.14)}
+.prod-play svg{width:20px;height:20px;fill:#fff;margin-left:3px}
+.prod-body{position:relative;z-index:2;padding:22px 24px 26px;margin-top:-52px}
+.prod-body h3{margin:0 0 9px;font-size:19px;font-weight:700}
+.prod-body p{margin:0 0 16px;font-size:15px;line-height:1.8;color:var(--t-mute);text-wrap:pretty}
+.tags{display:flex;flex-wrap:wrap;gap:7px}
+.tag{padding:4px 11px;border-radius:var(--r-sm);font-size:13px;background:rgba(255,255,255,.08);color:rgba(255,255,255,.78)}
+.prod-arrow{
+  display:inline-flex;align-items:center;gap:7px;margin-top:18px;font-size:14px;color:var(--c-primary);
+  transition:gap .35s var(--ease);
+}
+.prod-card:hover .prod-arrow{gap:14px}
+
+/* ================= 数字滚动 ================= */
+.cap{background:var(--s-page)}
+.cap-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:0}
+.cap-item{
+  text-align:left;padding:44px 40px;
+  background:var(--s-card);transition:background .4s;
+}
+.cap-item:hover{background:var(--s-high)}
+.cap-item:nth-child(1){grid-column:span 2;padding-bottom:36px}
+.cap-item:nth-child(2),.cap-item:nth-child(3){border-right:1px solid rgba(255,255,255,.06)}
+@media(max-width:900px){
+  .cap-grid{grid-template-columns:1fr}
+  .cap-item:nth-child(1){grid-column:span 1}
+  .cap-item{border-right:none!important}
+}
+.cap-num{font-size:clamp(40px,4.4vw,52px);font-weight:800;line-height:1;letter-spacing:-.035em;color:#fff}
+.cap-item:first-child .cap-num{font-size:clamp(64px,8vw,116px)}
+.cap-item:first-child .cap-label{font-size:20px;margin-top:20px;color:var(--t-h1)}
+.cap-item:first-child .cap-note{max-width:44ch;font-size:15px;margin-top:10px}
+.cap-unit{font-size:18px;font-weight:700;color:var(--c-primary);margin-left:4px}
+.cap-label{margin:18px 0 0;font-size:17px;font-weight:600;color:var(--t-ink)}
+.cap-note{margin:9px 0 0;font-size:13px;line-height:1.75;color:var(--t-mute)}
+
+/* ================= 制造能力（左右图文 + 视差） ================= */
+.mfg{overflow:hidden;background:var(--c-navy-2)}
+.mfg-row{display:grid;grid-template-columns:1fr 1fr;gap:clamp(30px,5vw,70px);align-items:center}
+@media(max-width:900px){.mfg-row{grid-template-columns:1fr}}
+.mfg-media{position:relative;border-radius:var(--r-lg);overflow:hidden}
+.mfg-media img{width:100%;height:100%;object-fit:cover;min-height:320px;will-change:transform}
+.mfg-media::after{content:"";position:absolute;inset:0;background:rgba(0,176,240,.07)}
+.mfg-list{display:grid;gap:14px;margin-top:28px}
+.mfg-item{
+  display:flex;gap:16px;padding:18px 20px;border-radius:var(--r-md);
+  background:var(--s-card);
+  transition:transform .45s var(--ease),background .4s;
+}
+.mfg-item:hover{transform:translateX(10px);background:var(--s-high)}
+.mfg-item .num{
+  flex-shrink:0;width:38px;height:38px;border-radius:10px;display:grid;place-items:center;
+  background:var(--c-primary);color:#04121F;
+  font-size:13.5px;font-weight:700;
+}
+.mfg-item h4{margin:0 0 5px;font-size:18px;font-weight:700}
+.mfg-item p{margin:0;font-size:15px;line-height:1.75;color:var(--t-mute);text-wrap:pretty}
+
+/* ================= 新闻 ================= */
+.news{background:var(--s-page)}
+.news-grid{display:grid;grid-template-columns:1.35fr 1fr;gap:26px}
+@media(max-width:960px){.news-grid{grid-template-columns:1fr}}
+.news-feat{
+  position:relative;border-radius:var(--r-lg);overflow:hidden;
+  min-height:400px;display:flex;align-items:flex-end;
+}
+.news-feat img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform 1.2s var(--ease)}
+.news-feat:hover img{transform:scale(1.06)}
+.news-feat::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,21,38,0) 30%,rgba(10,21,38,.96) 100%)} /* taste-skill-ignore: 照片上的中性遮罩，用于文字可读性 */
+.news-feat-body{position:relative;z-index:2;padding:34px}
+.news-date{font-size:13px;letter-spacing:2px;color:var(--c-primary)}
+.news-feat h3{margin:12px 0 0;font-size:23px;font-weight:700;line-height:1.45}
+.news-feat p{margin:12px 0 0;font-size:15px;line-height:1.85;color:var(--t-mute);text-wrap:pretty}
+.news-list{display:grid;gap:12px;align-content:start}
+.news-row{
+  display:flex;gap:16px;padding:18px;border-radius:var(--r-md);
+  background:var(--s-card);
+  transition:transform .45s var(--ease),background .4s;
+}
+.news-row:hover{transform:translateX(8px);background:var(--s-high)}
+.news-row .thumb{flex-shrink:0;width:104px;height:74px;border-radius:var(--r-sm);overflow:hidden;background:var(--s-card)}
+.news-row .thumb img{width:100%;height:100%;object-fit:cover;transition:transform .7s var(--ease)}
+.news-row:hover .thumb img{transform:scale(1.12)}
+.news-row h4{margin:0 0 7px;font-size:16px;font-weight:600;line-height:1.5}
+.news-row span{font-size:13px;color:var(--t-mute)}
+.news-more{display:inline-flex;align-items:center;gap:8px;margin-top:22px;font-size:14px;color:var(--c-primary);transition:gap .35s var(--ease)}
+.news-more:hover{gap:15px}
+
+.partners{background:var(--c-navy-2);overflow:hidden}
+@keyframes marquee{to{transform:translateX(-50%)}}
+
+/* ================= 立体地球 · 全球布局 ================= */
+.globe-stage{display:grid;grid-template-columns:1fr 320px;gap:clamp(24px,4vw,56px);align-items:center}
+@media(max-width:980px){.globe-stage{grid-template-columns:1fr}}
+
+.globe-box{
+  position:relative;width:100%;aspect-ratio:1/1;max-height:640px;min-height:340px;
+  border-radius:var(--r-lg);overflow:hidden;
+  background:var(--s-sunken);
+}
+.globe-box canvas{display:block;width:100%!important;height:100%!important}
+.globe-fallback{
+  position:absolute;inset:0;display:grid;place-content:center;text-align:center;gap:10px;
+  color:var(--t-mute);font-size:14px;
+}
+.globe-fallback small{font-size:12px;opacity:.6}
+.globe-fallback.gone{display:none}
+
+/* 标签层 */
+.globe-labels{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:2}
+.globe-label{
+  position:absolute;left:0;top:0;display:flex;align-items:center;gap:6px;
+  padding:3px 10px 3px 7px;border-radius:var(--r-sm);white-space:nowrap;
+  background:rgba(8,18,32,.88);
+  font-size:13px;color:rgba(255,255,255,.92);
+  transform:translate(-50%,-50%);transition:opacity .3s,border-color .3s,background .3s,box-shadow .3s;
+  will-change:transform;opacity:0;
+}
+.globe-label b{
+  font-size:11.5px;color:var(--c-primary);font-weight:700;letter-spacing:.4px;
+}
+.globe-label.os{background:rgba(10,30,52,.9)}
+.globe-label.hq{background:#00789E;font-weight:600}
+.globe-label.hq b{display:none}
+.globe-label.hover{background:var(--c-primary);color:#04121F}
+
+/* 侧栏 */
+.globe-side{
+  padding:26px;border-radius:var(--r-lg);
+  background:var(--s-card);
+}
+.gs-head{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.gs-dot{width:8px;height:8px;border-radius:50%;background:var(--c-primary);animation:blink 2.1s infinite}
+.gs-head h3{margin:0;font-size:18px;font-weight:700;letter-spacing:.5px}
+.gs-list{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.gs-list li{
+  display:grid;grid-template-columns:26px 1fr;gap:4px 11px;align-items:baseline;
+  padding:10px 12px;border-radius:8px;transition:background .35s,transform .35s var(--ease);
+}
+.gs-list li:hover{background:rgba(0,176,240,.1);transform:translateX(6px)}
+.gs-idx{
+  grid-row:span 2;font-size:13px;color:var(--c-primary);font-weight:700;
+  text-align:center;line-height:1.5;
+}
+.gs-name{font-size:16px;font-weight:600}
+.gs-tag{grid-column:2;font-size:13px;color:var(--t-mute)}
+.gs-domestic{margin-top:26px;padding-top:24px}
+.gs-domestic h4{margin:0 0 13px;font-size:13.5px;font-weight:600;color:rgba(255,255,255,.82)}
+.gs-chips{display:flex;flex-wrap:wrap;gap:7px}
+.gs-chips span{
+  padding:5px 12px;border-radius:var(--r-sm);font-size:13px;
+  background:rgba(56,189,248,.12);color:#9dd8fb;
+  transition:background .3s var(--ease),color .3s;
+}
+.gs-chips span:hover{background:rgba(56,189,248,.22);transform:translateY(-2px);color:#fff}
+.gs-tip{margin:22px 0 0;font-size:13px;color:var(--t-faint);letter-spacing:.4px}
+
+/* ================= CTA ================= */
+.cta{position:relative;padding:clamp(64px,8vw,110px) 0;overflow:hidden;background:var(--s-page)}
+.cta-bg{position:absolute;inset:0;background:url('assets/contact-bg.jpg') center/cover no-repeat;opacity:.08}
+.cta-bg::after{content:"";position:absolute;inset:0;background:var(--s-page)}
+.cta-inner{
+  position:relative;z-index:2;text-align:center;max-width:720px;margin-inline:auto;
+  background:var(--s-sunken);padding:44px 40px;border-radius:var(--r-lg);
+}
+.cta h2{margin:0;font-size:clamp(26px,3.6vw,40px);font-weight:800;letter-spacing:-.6px}
+.cta p{margin:18px auto 0;max-width:34em;font-size:16px;line-height:1.85;color:var(--t-mute);text-wrap:pretty}
+.cta .hero-cta{justify-content:center;opacity:1;transform:none;animation:none}
+
+/* ================= 页脚 ================= */
+.foot{background:var(--s-sunken);padding:64px 0 30px}
+.foot-grid{display:grid;grid-template-columns:1.5fr repeat(4,1fr);gap:36px}
+@media(max-width:960px){.foot-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.foot-grid{grid-template-columns:1fr}}
+.foot-brand p{margin:16px 0 0;font-size:14px;line-height:1.85;color:var(--t-mute);max-width:280px;text-wrap:pretty}
+.foot-col h5{margin:0 0 16px;font-size:16px;font-weight:700;letter-spacing:.5px}
+.foot-col a{display:block;margin-bottom:11px;font-size:14px;color:var(--t-mute);transition:color .3s,transform .3s var(--ease)}
+.foot-col a:hover{color:var(--c-primary);transform:translateX(5px)}
+.foot-bottom{
+  margin-top:52px;padding-top:28px;
+  display:flex;flex-wrap:wrap;gap:14px;justify-content:space-between;align-items:center;
+  font-size:13px;color:rgba(255,255,255,.42);
+}
+.foot-bottom a{color:rgba(255,255,255,.42);transition:color .3s}
+.foot-bottom a:hover{color:var(--c-primary)}
+
+/* ================= 回到顶部 ================= */
+.top-btn{
+  position:fixed;right:26px;bottom:26px;z-index:90;width:48px;height:48px;border-radius:50%;
+  background:var(--c-primary);display:grid;place-items:center;cursor:pointer;border:none;
+  opacity:0;transform:translateY(16px) scale(.85);pointer-events:none;
+  transition:opacity .45s,transform .45s var(--ease),background .35s;
+}
+.top-btn.show{opacity:1;transform:none;pointer-events:auto}
+.top-btn:hover{background:var(--c-primary-deep)}
+.top-btn svg{width:18px;height:18px;stroke:#04121F;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+
+/* ================= 进度条 ================= */
+.progress{position:fixed;top:0;left:0;height:2px;z-index:120;width:0;background:var(--c-primary)}
+
+/* ================= 滚动提示 ================= */
+.scroll-tip{
+  position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(14px);
+  z-index:95;padding:9px 18px;border-radius:100px;font-size:12px;letter-spacing:1.5px;
+  background:#0A1526;color:var(--t-mute);
+  opacity:0;pointer-events:none;transition:.5s var(--ease);
+}
+.scroll-tip.show{opacity:1;transform:translateX(-50%)}
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+
+<!-- ============ 导航 ============ -->
+<header class="nav" id="nav">
+  <div class="nav-inner">
+    <a class="brand" href="#top">
+      <img class="brand-logo" src="assets/logo-real.png" alt="中国华录·松下 CHPAVC" width="152" height="25">
+    </a>
+    <nav class="menu" id="menu">
+      <a href="#top" class="active">首页</a>
+      <a href="#about">关于我们</a>
+      <a href="#biz">产品与服务</a>
+      <a href="#cap">研发制造</a>
+      <a href="#news">新闻动态</a>
+      <a href="#contact">联系我们</a>
+    </nav>
+    <div class="nav-tools">
+      <span class="lang">语言 <b>中文</b></span>
+      <span class="nav-search" id="searchBtn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>
+      </span>
+      <span class="burger" id="burger"><i></i><i></i><i></i></span>
+    </div>
+  </div>
+</header>
+
+<!-- ============ HERO ============ -->
+<section class="hero" id="top">
+  <div class="hero-bg" id="heroBg"></div>
+  <svg class="hero-grid" id="heroGrid" aria-hidden="true" preserveAspectRatio="none">
+    <defs>
+      <pattern id="gridPat" width="74" height="74" patternUnits="userSpaceOnUse">
+        <path d="M74 0 L0 0 0 74" fill="none" stroke="rgba(0,176,240,.16)" stroke-width="1"/>
+      </pattern>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#gridPat)"/>
+  </svg>
+  <canvas id="stars"></canvas>
+  <div class="wrap">
+    <div class="hero-inner">
+      <h1>日本品质 <span class="grad">中国速度</span></h1>
+      <h2>2 + 2 &nbsp;四大产业布局</h2>
+      <p>以产业人应尽的责任，致力于社会生活的改善和提高，推动世界文化的进步。视觉产业、光存储产业、核心关键件产业、康养产业协同发展，为全球客户提供从概念设计到规模化交付的一站式制造服务。</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="#biz"><span>探索产业布局</span>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+        <a class="btn btn-ghost" href="#contact"><span>联系合作</span></a>
+      </div>
+    </div>
+  </div>
+  <div class="hero-scroll"><span>SCROLL</span><span class="rail"></span></div>
+</section>
+
+<!-- ============ 四大产业 ============ -->
+<section class="sec biz" id="biz">
+  <div class="wrap">
+    <div class="sec-head" data-reveal>
+      <h2 class="sec-title">四大<em>产业布局</em></h2>
+      <p class="sec-desc">立足“2+2”产业支柱，构建视觉、光存储、核心关键件与康养四大产业协同的制造生态。</p>
+    </div>
+    <!-- taste-skill-ignore: 设计稿 P11「产业布局」明确为四个板块卡片，结构由客户指定 -->
+    <div class="biz-list">
+      <article class="biz-row" data-reveal>
+        <div class="biz-row-head">
+          <div class="biz-ico"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4M7 12l2.6-3 2.4 3 2.6-4L18 12"/></svg></div>
+          <h3>视觉产业</h3>
+        </div>
+        <p class="biz-row-desc">蓝光播放机、蓝光刻录机、便携电视、电竞音箱等影音产品的 ODM 全链路线。</p>
+        <p class="biz-stat"><b>蓝光刻录机</b>日本市场占有率 No.1</p>
+        <figure class="biz-fig"><img src="assets/factory-1.jpg" alt="华录松下数字化生产车间" width="1280" height="719" loading="lazy"></figure>
+      </article>
+
+      <article class="biz-row" data-reveal>
+        <div class="biz-row-head">
+          <div class="biz-ico"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg></div>
+          <h3>光存储产业</h3>
+        </div>
+        <p class="biz-row-desc">蓝光光盘库与 Data Archiver 归档存储，专注大数据长期安全可靠绿色存储。</p>
+        <p class="biz-stat"><b>400 万张</b>蓝光光盘年产能</p>
+        <figure class="biz-fig"><img src="assets/da4.jpg" alt="第四代蓝光光盘库 DA4" width="469" height="294" loading="lazy"></figure>
+      </article>
+
+      <article class="biz-row" data-reveal>
+        <div class="biz-row-head">
+          <div class="biz-ico"><svg viewBox="0 0 24 24"><path d="M3 20h18M5 20V9l7-5 7 5v11M9 20v-6h6v6"/><path d="M9 10h.01M15 10h.01"/></svg></div>
+          <h3>核心关键件</h3>
+        </div>
+        <p class="biz-row-desc">模具、注塑、冲压、钣金、SMT 一条龙制造，精度达 ±0.03mm。</p>
+        <p class="biz-stat"><b>2 微米</b>最高模具加工精度</p>
+        <figure class="biz-fig"><img src="assets/factory-2.jpg" alt="精密模具与冲压加工车间" width="1280" height="718" loading="lazy"></figure>
+      </article>
+
+      <article class="biz-row" data-reveal>
+        <div class="biz-row-head">
+          <div class="biz-ico"><svg viewBox="0 0 24 24"><path d="M20.8 5.6a5.5 5.5 0 0 0-7.8 0L12 6.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l8.8 8.8 8.8-8.8a5.5 5.5 0 0 0 0-7.8z"/></svg></div>
+          <h3>康养产业</h3>
+        </div>
+        <p class="biz-row-desc">制氧机、雷达波安全守护仪等智能康养产品，延伸健康养老新赛道。</p>
+        <p class="biz-stat"><b>2 + 2</b>四大产业支柱格局</p>
+        <figure class="biz-fig"><img src="assets/contact-bg.jpg" alt="华录松下厂区与基础设施" width="1280" height="663" loading="lazy"></figure>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 产品展示 ============ -->
+<section class="sec prod" id="about">
+  <div class="wrap">
+    <div class="sec-head" data-reveal>
+      <h2 class="sec-title">产品<em>展示</em></h2>
+      <p class="sec-desc">从精密模具到整机组装，覆盖元件到成品的全流程生产交付能力。</p>
+    </div>
+    <div class="prod-grid">
+      <article class="prod-card" data-reveal="scale">
+        <div class="prod-media">
+          <span class="prod-badge">光存储</span>
+          <img src="assets/da4.jpg" alt="第四代蓝光光盘库 DA4" loading="lazy" width="469" height="294">
+          <span class="prod-play"><span><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span></span>
+        </div>
+        <div class="prod-body">
+          <h3>蓝光光盘库 Data Archiver</h3>
+          <p>长寿命 100 年、大容量单机柜 PB 级、安全可靠、绿色节能的归档级存储设备。</p>
+          <div class="tags"><span class="tag">归档级</span><span class="tag">100年寿命</span><span class="tag">低功耗</span></div>
+          <span class="prod-arrow">了解详情 →</span>
+        </div>
+      </article>
+      <article class="prod-card" data-reveal="scale" data-delay="100">
+        <div class="prod-media">
+          <span class="prod-badge">核心关键件</span>
+          <img src="assets/factory-2.jpg" alt="SMT 与精密加工车间" loading="lazy" width="1280" height="718">
+          <span class="prod-play"><span><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span></span>
+        </div>
+        <div class="prod-body">
+          <h3>精密模具与 SMT 加工</h3>
+          <p>设计能力 400 余面/年，最高加工精度 2 微米，SMT 月点数能力 2 亿点以上。</p>
+          <div class="tags"><span class="tag">0.1PPM</span><span class="tag">2μm</span><span class="tag">MES系统</span></div>
+          <span class="prod-arrow">了解详情 →</span>
+        </div>
+      </article>
+      <article class="prod-card" data-reveal="scale" data-delay="200">
+        <div class="prod-media">
+          <span class="prod-badge">数智工厂</span>
+          <img src="assets/factory-1.jpg" alt="数字化生产车间" loading="lazy" width="1280" height="719">
+          <span class="prod-play"><span><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span></span>
+        </div>
+        <div class="prod-body">
+          <h3>智能制造与自动化产线</h3>
+          <p>关键工序自动化率达 99%，柔性产线 24 小时完成订单切换，无人稼动 8~16 小时。</p>
+          <div class="tags"><span class="tag">AGV</span><span class="tag">WMS</span><span class="tag">数字孪生</span></div>
+          <span class="prod-arrow">了解详情 →</span>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 制造能力 数字 ============ -->
+<section class="sec cap" id="cap">
+  <div class="wrap">
+    <div class="sec-head" data-reveal>
+      <h2 class="sec-title">制造<em>能力</em></h2>
+      <p class="sec-desc">公司充分发挥“一条龙”制造优势，具备模具（设计&amp;制造）、注塑、冲压、钣金、SMT 等全流程生产能力。</p>
+    </div>
+    <div class="cap-grid">
+      <div class="cap-item" data-reveal>
+        <div><span class="cap-num" data-count="2" data-dec="0">0</span><span class="cap-unit">亿点</span></div>
+        <p class="cap-label">SMT 月点数</p>
+        <p class="cap-note">14 条产线、250 余台设备，月点数 2 亿点以上，实现 0.1PPM 品质。</p>
+      </div>
+      <div class="cap-item" data-reveal data-delay="90">
+        <div><span class="cap-num" data-count="3.3" data-dec="1">0</span><span class="cap-unit">亿点/年</span></div>
+        <p class="cap-label">冲压年产能</p>
+        <p class="cap-note">30 吨~630 吨冲压设备，可生产钣金制品 300 余种。</p>
+      </div>
+      <div class="cap-item" data-reveal data-delay="180">
+        <div><span class="cap-num" data-count="400" data-dec="0">0</span><span class="cap-unit">万张</span></div>
+        <p class="cap-label">蓝光光盘年产能</p>
+        <p class="cap-note">建有 300GB/500GB 蓝光光盘生产体制，年生产能力达 400 万张。</p>
+      </div>
+      <div class="cap-item" data-reveal data-delay="270">
+        <div><span class="cap-num" data-count="500" data-dec="0">0</span><span class="cap-unit">面/年</span></div>
+        <p class="cap-label">模具设计能力</p>
+        <p class="cap-note">可设计制作光学镜片、微米级镜筒、高速冲冷、汽车制品等精密模具。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 制造能力 图文 + 视差 ============ -->
+<section class="sec mfg">
+  <div class="wrap">
+    <div class="mfg-row">
+      <div class="mfg-media" data-reveal="left">
+        <img src="assets/factory-2.jpg" alt="华录松下自动化生产车间" loading="lazy" id="parallaxImg" width="1280" height="718">
+      </div>
+      <div data-reveal="right">
+        <h2 class="sec-title" style="text-align:left;font-size:clamp(24px,3.2vw,36px)">柔性制造<br><em>快速响应</em></h2>
+        <p class="sec-desc" style="margin-left:0">打破传统制造的刚性瓶颈，以柔性化生产体系快速响应市场多变需求。模块化产线支持多品类、小批量混线并行生产。</p>
+        <div class="mfg-list">
+          <div class="mfg-item">
+            <div><h4>极速响应机制</h4><p>从需求解析到排产启动仅需 24 小时，大幅缩短交付周期。</p></div>
+          </div>
+          <div class="mfg-item">
+            <div><h4>柔性生产适配</h4><p>打破单一品种限制，支持多品类、小批量混线并行生产。</p></div>
+          </div>
+          <div class="mfg-item">
+            <div><h4>全域数据可视</h4><p>实时采集生产全链路数据，MES 系统实现全程追溯与精细管控。</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 新闻动态 ============ -->
+<section class="sec news" id="news">
+  <div class="wrap">
+    <div class="sec-head" data-reveal>
+      <h2 class="sec-title">新闻<em>动态</em></h2>
+    </div>
+    <div class="news-grid">
+      <a class="news-feat" href="#" data-reveal="left">
+        <img src="assets/factory-1.jpg" alt="华录松下生产基地" loading="lazy" width="1280" height="719">
+        <div class="news-feat-body">
+          <span class="news-date">2026 / 10 / 22</span>
+          <h3>华录松下开发中心支会荣获"全国模范职工小家"荣誉</h3>
+          <p>大连市总工会领导莅临公司，为开发中心支会颁发"全国模范职工小家"荣誉证书及牌匾。</p>
+        </div>
+      </a>
+      <div class="news-list" data-reveal="right">
+        <a class="news-row" href="#">
+          <span class="thumb"><img src="assets/da4.jpg" alt="" loading="lazy" width="469" height="294"></span>
+          <div><h4>华录松下推出新一代 500GB 大容量蓝光光盘库 引领绿色存力发展</h4><span>11-08</span></div>
+        </a>
+        <a class="news-row" href="#">
+          <span class="thumb"><img src="assets/factory-2.jpg" alt="" loading="lazy" width="1280" height="718"></span>
+          <div><h4>大连市企业联合会组织多家企业到华录松下参观交流</h4><span>10-25</span></div>
+        </a>
+        <a class="news-row" href="#">
+          <span class="thumb"><img src="assets/contact-bg.jpg" alt="" loading="lazy" width="1280" height="663"></span>
+          <div><h4>公司获评"国家级绿色工厂"，制造能力再获行业认可</h4><span>09-18</span></div>
+        </a>
+        <a class="news-row" href="#">
+          <span class="thumb"><img src="assets/starfield.jpg" alt="" loading="lazy" width="1280" height="720"></span>
+          <div><h4>数智工厂正式上线运行，开启智能制造新篇章</h4><span>08-30</span></div>
+        </a>
+        <a class="news-more" href="#">查看全部新闻 →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 全球布局 横向滚动 ============ -->
+<section class="sec partners" id="global">
+  <div class="wrap">
+    <div class="sec-head" data-reveal>
+      <h2 class="sec-title">全球<em>布局</em></h2>
+      <p class="sec-desc">产品与服务网络覆盖国内 10 省市，并销往日本、新加坡、马来西亚、捷克、美国、巴西等多个国家。</p>
+    </div>
+
+    <div class="globe-stage" data-reveal="scale">
+      <div class="globe-box" id="globeBox">
+        <div class="globe-fallback">
+          <p>正在加载三维地球…</p>
+          <small>若长时间未显示，请检查网络后刷新</small>
+        </div>
+      </div>
+      <aside class="globe-side">
+        <div class="gs-head">
+          <span class="gs-dot"></span>
+          <h3>产业分布</h3>
+        </div>
+        <ul class="gs-list">
+          <li><span class="gs-idx">①</span><span class="gs-name">日本</span><span class="gs-tag">蓝光播放机全球市场</span></li>
+          <li><span class="gs-idx">②</span><span class="gs-name">新加坡</span><span class="gs-tag">亚太区域服务</span></li>
+          <li><span class="gs-idx">③</span><span class="gs-name">巴西</span><span class="gs-tag">南美市场拓展</span></li>
+          <li><span class="gs-idx">④</span><span class="gs-name">马来西亚</span><span class="gs-tag">电子制造配套</span></li>
+          <li><span class="gs-idx">⑤</span><span class="gs-name">捷克</span><span class="gs-tag">欧洲市场</span></li>
+          <li><span class="gs-idx">⑥</span><span class="gs-name">美国</span><span class="gs-tag">北美市场</span></li>
+        </ul>
+        <div class="gs-domestic">
+          <h4>国内 10 省市</h4>
+          <div class="gs-chips">
+            <span>辽宁</span><span>吉林</span><span>黑龙江</span><span>天津</span><span>山东</span>
+            <span>浙江</span><span>江苏</span><span>福建</span><span>广东</span><span>上海</span>
+          </div>
+        </div>
+        <p class="gs-tip">拖动旋转 · 滚轮缩放 · 悬停查看</p>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CTA ============ -->
+<section class="cta" id="contact">
+  <div class="cta-bg"></div>
+  <div class="wrap">
+    <div class="cta-inner" data-reveal>
+      <h2>与我们建立长期合作</h2>
+      <p>业务合作、售后服务、实验室设备对外租用、模具与关键零部件招商——欢迎与我们联系。</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="#"><span>立即联系</span>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+        <a class="btn btn-ghost" href="tel:041184790599"><span>0411-84790599</span></a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 页脚 ============ -->
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <a class="brand" href="#top">
+          <img class="brand-logo" src="assets/logo-real.png" alt="中国华录·松下 CHPAVC" width="152" height="25">
+        </a>
+        <p>中国华录·松下电子信息有限公司<br>辽宁省大连高新技术产业园区七贤岭华路1号<br>TEL：0411-84790599</p>
+      </div>
+      <div class="foot-col">
+        <h5>关于我们</h5>
+        <a href="#">公司简介</a><a href="#">发展历程</a><a href="#">产业布局</a><a href="#">资质荣誉</a><a href="#">企业文化</a>
+      </div>
+      <div class="foot-col">
+        <h5>产品与服务</h5>
+        <a href="#">EMS 业务</a><a href="#">关键零部件</a><a href="#">影音产品</a><a href="#">蓝光光盘库</a><a href="#">康养产品</a>
+      </div>
+      <div class="foot-col">
+        <h5>研发制造</h5>
+        <a href="#">研发创新</a><a href="#">精益制造</a><a href="#">数智工厂</a><a href="#">品质保证</a><a href="#">售后服务</a>
+      </div>
+      <div class="foot-col">
+        <h5>联系我们</h5>
+        <a href="#">联系方式</a><a href="#">业务合作</a><a href="#">人才招聘</a><a href="#">信息公开</a>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>Copyright © 中国华录·松下 2001-2026</span>
+      <span><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">京ICP备05031335号</a> | <a href="#">隐私政策</a> | <a href="#">网站地图</a></span>
+    </div>
+  </div>
+</footer>
+
+<button class="top-btn" id="topBtn" aria-label="回到顶部">
+  <svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+</button>
+
+<script>
+/* ============================================================
+   1. 星空粒子背景（Canvas）
+   ============================================================ */
+(function () {
+  const cv = document.getElementById('stars');
+  const ctx = cv.getContext('2d');
+  let W, H, stars = [], raf = null, dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+  function resize() {
+    W = cv.clientWidth; H = cv.clientHeight;
+    cv.width = W * dpr; cv.height = H * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    build();
+  }
+  function build() {
+    const n = Math.min(150, Math.round(W * H / 11000));
+    stars = Array.from({ length: n }, () => ({
+      x: Math.random() * W, y: Math.random() * H,
+      r: Math.random() * 1.5 + .35,
+      a: Math.random() * .7 + .25,
+      v: Math.random() * .35 + .08,
+      d: Math.random() * 3.2
+    }));
+  }
+  function draw(t) {
+    ctx.clearRect(0, 0, W, H);
+    for (const s of stars) {
+      s.y += s.v;
+      if (s.y > H) { s.y = -2; s.x = Math.random() * W; }
+      // 呼吸闪烁
+      const tw = .55 + .45 * Math.sin(t * .0011 + s.d);
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0,176,240,' + (s.a * tw).toFixed(3) + ')';
+      ctx.fill();
+      // 偶发亮星
+      if (s.r > 1.15) {
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r * 3.6, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0,176,240,' + (s.a * tw * .07).toFixed(3) + ')';
+        ctx.fill();
+      }
+    }
+    raf = requestAnimationFrame(draw);
+  }
+  function start() { if (!raf) raf = requestAnimationFrame(draw); }
+  function stop() { if (raf) { cancelAnimationFrame(raf); raf = null; } }
+
+  resize();
+  // 截图/走查模式：不启动动画循环
+  if (new URLSearchParams(location.search).get('shot') === '1') {
+    draw(0);
+  } else {
+    start();
+  }
+  window.addEventListener('resize', () => { resize(); });
+
+  // 页面不可见时暂停，节省性能
+  document.addEventListener('visibilitychange', () => {
+    document.hidden ? stop() : start();
+  });
+
+  // 尊重系统「减少动态效果」设置
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) stop();
+})();
+
+/* ============================================================
+   2. 滚动揭示 + 导航状态 + 进度条 + 回顶按钮
+   ============================================================ */
+(function () {
+  const nav = document.getElementById('nav');
+  const bar = document.getElementById('progress');
+  const topBtn = document.getElementById('topBtn');
+  const tip = document.createElement('div');
+  tip.className = 'scroll-tip';
+  tip.textContent = '继续向下滚动 ↓';
+  document.body.appendChild(tip);
+
+  // IntersectionObserver 揭示
+  const revealEls = document.querySelectorAll('[data-reveal]');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        const d = parseInt(e.target.dataset.delay || '0', 10);
+        setTimeout(() => e.target.classList.add('is-in'), d);
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: .14, rootMargin: '0px 0px -8% 0px' });
+  revealEls.forEach(el => io.observe(el));
+
+  // 导航滚动态 + 进度条 + 回顶按钮
+  let ticking = false;
+  function onScroll() {
+    const y = window.scrollY;
+    nav.classList.toggle('scrolled', y > 40);
+    topBtn.classList.toggle('show', y > 560);
+    tip.classList.toggle('show', y > 200 && y < 900);
+    const h = document.documentElement.scrollHeight - window.innerHeight;
+    bar.style.width = (h > 0 ? (y / h) * 100 : 0) + '%';
+
+    // 当前区块高亮
+    const secs = document.querySelectorAll('section[id]');
+    let cur = '';
+    secs.forEach(s => { if (y >= s.offsetTop - 140) cur = s.id; });
+    document.querySelectorAll('.menu a').forEach(a => {
+      a.classList.toggle('active', a.getAttribute('href') === '#' + cur);
+    });
+    ticking = false;
+  }
+  window.addEventListener('scroll', () => {
+    if (!ticking) { ticking = true; requestAnimationFrame(onScroll); }
+  }, { passive: true });
+  onScroll();
+
+  topBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+})();
+
+/* ============================================================
+   3. 数字滚动（IntersectionObserver 触发一次）
+   ============================================================ */
+(function () {
+  const nums = document.querySelectorAll('[data-count]');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (!e.isIntersecting) return;
+      const el = e.target;
+      const to = parseFloat(el.dataset.count);
+      const dec = parseInt(el.dataset.dec || '0', 10);
+      const dur = 900;
+      const t0 = performance.now();
+      (function step(now) {
+        const p = Math.min(1, (now - t0) / dur);
+        // easeOutExpo
+        const eased = p === 1 ? 1 : 1 - Math.pow(2, -10 * p);
+        const v = to * eased;
+        el.textContent = dec > 0 ? v.toFixed(dec) : Math.floor(v).toLocaleString('en-US');
+        if (p < 1) requestAnimationFrame(step);
+        else el.textContent = dec > 0 ? to.toFixed(dec) : to.toLocaleString('en-US');
+      })(t0);
+      io.unobserve(el);
+    });
+  }, { threshold: .18 });
+  nums.forEach(n => io.observe(n));
+})();
+
+/* ============================================================
+   4. 视差（Hero 背景 + 网格 + 制造能力配图）
+   ============================================================ */
+(function () {
+  const heroBg = document.getElementById('heroBg');
+  const heroGrid = document.getElementById('heroGrid');
+  const pImg = document.getElementById('parallaxImg');
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduce) return;
+
+  let ticking = false;
+  function onScroll() {
+    const y = window.scrollY;
+    // Hero 视差
+    if (y < window.innerHeight * 1.2) {
+      heroBg.style.transform = 'translate3d(0,' + (y * 0.28) + 'px,0) scale(' + (1 + y * 0.00012) + ')';
+      heroGrid.style.transform = 'translate3d(0,' + (y * 0.13) + 'px,0)';
+      heroGrid.style.opacity = String(Math.max(0, 0.5 - y * 0.00055));
+    }
+    // 制造能力配图视差
+    if (pImg) {
+      const r = pImg.getBoundingClientRect();
+      const off = (r.top + r.height / 2 - window.innerHeight / 2) * -0.05;
+      pImg.style.transform = 'translate3d(0,' + off.toFixed(1) + 'px,0) scale(1.09)';
+    }
+    ticking = false;
+  }
+  window.addEventListener('scroll', () => {
+    if (!ticking) { ticking = true; requestAnimationFrame(onScroll); }
+  }, { passive: true });
+})();
+
+/* ============================================================
+   5. 移动端菜单
+   ============================================================ */
+(function () {
+  const burger = document.getElementById('burger');
+  const menu = document.getElementById('menu');
+  burger.addEventListener('click', () => {
+    burger.classList.toggle('on');
+    menu.classList.toggle('open');
+  });
+  menu.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
+    burger.classList.remove('on');
+    menu.classList.remove('open');
+  }));
+})();
+
+/* ============================================================
+   6. 立体地球 · 全球布局
+   ============================================================ */
+(function () {
+  const box = document.getElementById('globeBox');
+  if (!box) return;
+  const fallback = box.querySelector('.globe-fallback');
+
+  // three.js 走 CDN，若离线则优雅降级为静态提示
+  import('./js/globe.js')
+    .then(mod => mod.mountGlobe(box, {
+      autoRotate: true,
+      showArcs: true,
+      labels: true
+    }))
+    .then(() => {
+      fallback?.classList.add('gone');
+    })
+    .catch(err => {
+      console.warn('[globe] 初始化失败', err);
+      if (fallback) {
+        fallback.innerHTML =
+          '<p>三维地球暂不可用</p>' +
+          '<small>请检查网络连接，或稍后重试</small>';
+      }
+    });
+})();
+
+/* ============================================================
+   7. 卡片 3D 倾斜（鼠标跟随）
+   ============================================================ */
+(function () {
+  if (window.matchMedia('(hover:none)').matches) return;
+  document.querySelectorAll('.biz-card, .prod-card').forEach(card => {
+    card.addEventListener('mousemove', e => {
+      const r = card.getBoundingClientRect();
+      const x = (e.clientX - r.left) / r.width - .5;
+      const y = (e.clientY - r.top) / r.height - .5;
+      card.style.transform = 'perspective(900px) rotateX(' + (-y * 6).toFixed(2) + 'deg) rotateY(' + (x * 6).toFixed(2) + 'deg) translateY(-10px)';
+    });
+    card.addEventListener('mouseleave', () => { card.style.transform = ''; });
+  });
+})();
+
+/* ============================================================
+   8. 调试/预览辅助：?scroll=N 直接定位，?shot=1 关闭动画
+   （供设计走查与截图比对使用，不影响正常使用）
+   ============================================================ */
+(function () {
+  const q = new URLSearchParams(location.search);
+  if (q.get('shot') === '1') {
+    document.documentElement.style.scrollBehavior = 'auto';
+    // headless 截图时虚拟时间不推进 CSS 过渡，直接禁用并强制显示
+    const st = document.createElement('style');
+    st.textContent = '*,*::before,*::after{transition:none!important;animation:none!important}' +
+      '[data-reveal]{opacity:1!important;transform:none!important}';
+    document.head.appendChild(st);
+    document.querySelectorAll('[data-reveal]').forEach(el => el.classList.add('is-in'));
+    document.querySelectorAll('[data-count]').forEach(el => {
+      const v = el.dataset.count;
+      if (v) el.textContent = parseFloat(v).toLocaleString('en-US');
+    });
+    // 停止 canvas 动画循环，避免持续重绘影响截图
+    window.__freeze = true;
+  }
+  const y = parseInt(q.get('scroll') || '0', 10);
+  if (y > 0) {
+    window.addEventListener('load', () => setTimeout(() => window.scrollTo(0, y), 200));
+  }
+})();
+</script>
+</body>
+</html>
